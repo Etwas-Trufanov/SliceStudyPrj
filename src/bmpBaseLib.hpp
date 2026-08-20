@@ -129,12 +129,12 @@ public:
     void setByPos(int x, int y, RGB color) {
 
         if (x < 0 || x >= width ||
-            (height-y) < 0 || (height-y) >= height)
+            (height-(y+1)) < 0 || (height-(y+1)) >= height)
             throw std::out_of_range(
                 "Pixel coordinates out of range"
             );
 
-        size_t i = index(x, (height-y));
+        size_t i = index(x, (height-(y+1)));
 
         pixels[i]     = color.r;
         pixels[i + 1] = color.g;
