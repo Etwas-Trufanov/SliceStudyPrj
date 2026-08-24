@@ -8,6 +8,7 @@
     "adapter": "CodeLLDB",
     "request": "launch",
     "program": "$ZED_WORKTREE_ROOT/build/src/Slicer",
+    "args": ["99"],
     "cwd": "$ZED_WORKTREE_ROOT"
   }
 ]
