@@ -15,32 +15,37 @@
 
 // Структура точки
 // Хранит x и y во float
-struct TPoint {
+struct TVector2 {
   float x, y;
-  TPoint() : x(0), y(0) {};
-  TPoint(float x, float y) : x(x), y(y) {};
+  TVector2() : x(0), y(0) {};
+  TVector2(float x, float y) : x(x), y(y) {};
 
   // Перегруженный оператор сравнения точек
-  bool operator==(const TPoint &other) const {
+  bool operator==(const TVector2 &other) const {
     return ((x == other.x) and (y == other.y));
   }
 };
+
 
 // Структура линии
 // Хранит две точки
 // id следующей линии
 struct TLine {
-  TPoint pos1;
-  TPoint pos2;
+  // Точки
+  TVector2 pos1;
+  TVector2 pos2;
 
+  // Указатель на следующую линию
   std::size_t next = 0xFFFFFFFFFFFF;
 
-  TLine() : pos1(TPoint()), pos2(TPoint()) {};
-  TLine(TPoint pos1, TPoint pos2) : pos1(pos1), pos2(pos2) {};
+  // Базовый конструктор - генерация на нулевых координатах
+  TLine() : pos1(TVector2()), pos2(TVector2()) {};
+  // Конструктор, принимает точки
+  TLine(TVector2 pos1, TVector2 pos2) : pos1(pos1), pos2(pos2) {};
 
 };
 
-// Соединяет родственные по id линии, находя их точку пересечения
+// Соединяет линии в периметр по совпадающим координатам
 void connectLines(std::vector<TLine> &outline) {
   for (std::size_t i = 0; i < outline.size(); i++) {
     for (std::size_t j = 0; j < outline.size(); j++) {
@@ -59,7 +64,7 @@ void offsetLines(std::vector<TLine> &outline, std::vector<TLine> &slice, float d
     float dx = line.pos2.x - line.pos1.x;
     float dy = line.pos2.y - line.pos1.y;
     float modD = std::sqrt((dx*dx)+(dy*dy));
-    slice.emplace_back(TLine(TPoint(-dy/modD*distance+line.pos1.x, dx/modD*distance+line.pos1.y), TPoint(-dy/modD*distance+line.pos2.x, dx/modD*distance+line.pos2.y)));
+    slice.emplace_back(TLine(TVector2(-dy/modD*distance+line.pos1.x, dx/modD*distance+line.pos1.y), TVector2(-dy/modD*distance+line.pos2.x, dx/modD*distance+line.pos2.y)));
     slice.back().next = line.next;
   }
 
@@ -92,8 +97,7 @@ void offsetLines(std::vector<TLine> &outline, std::vector<TLine> &slice, float d
   }
 }
 
-// Загрузка модели с файла
-// Ничего сложного
+// Загрузка опорных периметров с файла
 void loadModel(std::vector<TLine> &outline) {
   std::ifstream f;
   f.open("outline.txt");
@@ -114,7 +118,7 @@ void loadModel(std::vector<TLine> &outline) {
       tokenstream << token;
       tokenstream >> pos1x >> pos1y >> pos2x >> pos2y;
 
-      outline.emplace_back(TPoint(pos1x, pos1y), TPoint(pos2x, pos2y));
+      outline.emplace_back(TVector2(pos1x, pos1y), TVector2(pos2x, pos2y));
     }
     connectLines(outline);
   }
@@ -237,7 +241,9 @@ void drawOutline(BMP &image, std::vector<TLine> &drawObject, RGB color) {
     }
 }
 
-// Проверка самопересечений, вернёт true при таковом
+
+// Проверка периметра на самопересечение
+// true - при наличии таковых
 bool checkSelfCollisions(std::vector<TLine> &outline) {
   for (size_t i = 0; i < outline.size(); i++) {
     TLine &line1 = outline[i];
@@ -280,6 +286,8 @@ bool checkSelfCollisions(std::vector<TLine> &outline) {
   return false;
 }
 
+// Проверка всего слоя на самоколлизии
+// true - при наличии таковых
 bool checkSelfLayerCollision(std::vector<std::vector<TLine>> &layer) {
   for (size_t PerimeterCounter1 = 0; PerimeterCounter1 < layer.size();
        PerimeterCounter1++) {
@@ -351,6 +359,7 @@ bool checkSelfLayerCollision(std::vector<std::vector<TLine>> &layer) {
   return false;
 }
 
+// Аргумент - растояние отступа на шаге
 int main(int argc, char **argv) {
 
     int offsetsNum;
